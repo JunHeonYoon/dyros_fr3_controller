@@ -1,4 +1,4 @@
-# default_franka_controllers
+# Dyros FR3 Controller
 Default controllers for franka fr3
 ## Usage
 ### Build
