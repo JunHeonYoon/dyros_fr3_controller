@@ -88,7 +88,8 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'controller_name',
-            description='Name of the controller to spawn (required, no default)',
+            default_value='test_effort_controller',
+            description='Name of the controller to spawn (required, default: test_effort_controller)',
         ),
         OpaqueFunction(function=generate_robot_nodes),
     ])

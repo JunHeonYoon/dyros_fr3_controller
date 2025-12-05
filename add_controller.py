@@ -220,6 +220,7 @@ namespace ___PKG___
 class ___CLASS___ : public controller_interface::ControllerInterface 
 {
     public:
+        ~___CLASS___() override;
         // ========================================================================
         // ============================ Core Functions ============================
         // ========================================================================
@@ -309,6 +310,14 @@ class ___CLASS___ : public controller_interface::ControllerInterface
         std::mutex robot_data_mutex_;
         std::mutex calculation_mutex_;
         std::atomic<bool> compute_inflight_{false};
+        std::atomic<bool> relax_wait_guard_{false};
+        std::thread compute_thread_;
+        std::mutex compute_cv_mutex_;
+        std::condition_variable compute_cv_;
+        std::condition_variable compute_done_cv_;
+        bool compute_requested_{false};
+        bool compute_completed_{false};
+        bool stop_compute_thread_{false};
 
         // ========================================================================
         // ====================== Main Controller Functions =======================
@@ -317,6 +326,7 @@ class ___CLASS___ : public controller_interface::ControllerInterface
         void updateJointStates();			
         void updateRobotData();
         void setMode(CtrlMode control_mode);
+        void computeWorkerLoop();
 
         // ========================================================================
         // =========================== ROS Subs & Pubs  ===========================
@@ -359,6 +369,21 @@ namespace ___PKG___
 // ========================================================================
 // ============================ Core Functions ============================
 // ========================================================================
+___CLASS___::~___CLASS___()
+{
+  {
+    std::lock_guard<std::mutex> lock(compute_cv_mutex_);
+    stop_compute_thread_ = true;
+    compute_requested_ = false;
+  }
+  compute_cv_.notify_all();
+  compute_done_cv_.notify_all();
+  if (compute_thread_.joinable())
+  {
+    compute_thread_.join();
+  }
+}
+
 CallbackReturn ___CLASS___::on_init() 
 {
   try 
@@ -414,7 +439,16 @@ CallbackReturn ___CLASS___::on_init()
       "___SNAKE___/control_mode",
       rclcpp::QoS(10),
       std::bind(&___CLASS___::controlModeCallback, this, std::placeholders::_1)
-);
+    );
+
+    if (!compute_thread_.joinable())
+    {
+      std::lock_guard<std::mutex> lock(compute_cv_mutex_);
+      stop_compute_thread_ = false;
+      compute_requested_ = false;
+      compute_completed_ = false;
+      compute_thread_ = std::thread(&___CLASS___::computeWorkerLoop, this);
+    }
 
   } 
   catch (const std::exception& e) 
@@ -574,6 +608,17 @@ controller_interface::return_type ___CLASS___::update(const rclcpp::Time& /*time
     LOGW(get_node(), "State update exceeded 1.0 ms (%.3f ms)", spent_ms);
   }
 
+  constexpr double kWaitGuardMs = 0.2; // leave headroom for remaining work and comms
+  const bool skip_guard = relax_wait_guard_.load(std::memory_order_acquire);
+  if (!skip_guard && budget_ms > kWaitGuardMs)
+  {
+    budget_ms -= kWaitGuardMs;
+  }
+  else if (!skip_guard)
+  {
+    budget_ms = 0.0;
+  }
+
   Eigen::Vector7d last_command;
   {
     std::lock_guard<std::mutex> lk(calculation_mutex_);
@@ -582,34 +627,61 @@ controller_interface::return_type ___CLASS___::update(const rclcpp::Time& /*time
 
   bool used_new_solution = false;
 
-  if (!compute_inflight_.exchange(true, std::memory_order_acq_rel)) 
-  {
-    std::packaged_task<void()> task([this](){
-      try 
+  auto request_compute_and_wait =
+      [this](double wait_ms, bool clear_relax_on_success) -> bool
       {
-        this->compute();
-      } 
-      catch (const std::exception& e) 
+        {
+          std::lock_guard<std::mutex> lock(compute_cv_mutex_);
+          compute_requested_ = true;
+          compute_completed_ = false;
+        }
+        compute_cv_.notify_one();
+
+        const double clamped_wait = std::max(0.0, std::min(wait_ms, 0.2));
+        const auto wait_dur = std::chrono::duration<double, std::milli>(clamped_wait);
+        std::unique_lock<std::mutex> wait_lock(compute_cv_mutex_);
+        if (compute_done_cv_.wait_for(wait_lock, wait_dur, [this]() { return compute_completed_; }))
+        {
+          if (clear_relax_on_success)
+          {
+            relax_wait_guard_.store(false, std::memory_order_release);
+          }
+          return true;
+        }
+        return false;
+      };
+  if (skip_guard)
+  {
+    if (!compute_inflight_.exchange(true, std::memory_order_acq_rel))
+    {
+      try
+      {
+        compute();
+        used_new_solution = true;
+        relax_wait_guard_.store(false, std::memory_order_release);
+      }
+      catch (const std::exception& e)
       {
         LOGE(get_node(), "Exception in compute(): %s", e.what());
-      } 
-      catch (...) 
+      }
+      catch (...)
       {
         LOGE(get_node(), "Unknown exception in compute()");
       }
       compute_inflight_.store(false, std::memory_order_release);
-    });
-    std::future<void> fut = task.get_future();
-    std::thread(std::move(task)).detach();
-
-    const auto wait_dur = std::chrono::duration<double, std::milli>(budget_ms);
-    if (fut.wait_for(wait_dur) == std::future_status::ready) 
+      {
+        std::lock_guard<std::mutex> lock(compute_cv_mutex_);
+        compute_completed_ = true;
+        compute_requested_ = false;
+      }
+      compute_done_cv_.notify_all();
+    }
+  }
+  else if (!compute_inflight_.exchange(true, std::memory_order_acq_rel)) 
+  {
+    if (request_compute_and_wait(budget_ms, false))
     {
       used_new_solution = true;
-    }
-    else
-    {
-      LOGW(get_node(), "Background compute timed out (waited %.3f ms) — reusing last torque", budget_ms);
     }
   } 
 
@@ -618,6 +690,7 @@ controller_interface::return_type ___CLASS___::update(const rclcpp::Time& /*time
   {
     std::lock_guard<std::mutex> lk(calculation_mutex_);
     command = ___CMD___;
+    relax_wait_guard_.store(false, std::memory_order_release);
   } 
   else 
   {
@@ -725,9 +798,40 @@ void ___CLASS___::updateRobotData()
   }
 }
 
+void ___CLASS___::computeWorkerLoop()
+{
+  std::unique_lock<std::mutex> lock(compute_cv_mutex_);
+  while (!stop_compute_thread_)
+  {
+    compute_cv_.wait(lock, [this]() { return compute_requested_ || stop_compute_thread_; });
+    if (stop_compute_thread_)
+    {
+      break;
+    }
+    compute_requested_ = false;
+    lock.unlock();
+    try
+    {
+      compute();
+    }
+    catch (const std::exception& e)
+    {
+      LOGE(get_node(), "Exception in compute(): %s", e.what());
+    }
+    catch (...)
+    {
+      LOGE(get_node(), "Unknown exception in compute()");
+    }
+    lock.lock();
+    compute_completed_ = true;
+    compute_inflight_.store(false, std::memory_order_release);
+    compute_done_cv_.notify_all();
+  }
+}
+
 void ___CLASS___::setMode(CtrlMode mode)
 {
-  std::lock_guard<std::mutex> lk(calculation_mutex_);
+  std::scoped_lock<std::mutex, std::mutex> lk(robot_data_mutex_, calculation_mutex_);
 
   if (control_mode_ == mode) 
   {
@@ -841,3 +945,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

@@ -50,6 +50,7 @@ namespace dyros_fr3_controllers
 class TestVelocityController : public controller_interface::ControllerInterface 
 {
     public:
+        ~TestVelocityController() override;
         // ========================================================================
         // ============================ Core Functions ============================
         // ========================================================================
@@ -139,6 +140,14 @@ class TestVelocityController : public controller_interface::ControllerInterface
         std::mutex robot_data_mutex_;
         std::mutex calculation_mutex_;
         std::atomic<bool> compute_inflight_{false};
+        std::atomic<bool> relax_wait_guard_{false};
+        std::thread compute_thread_;
+        std::mutex compute_cv_mutex_;
+        std::condition_variable compute_cv_;
+        std::condition_variable compute_done_cv_;
+        bool compute_requested_{false};
+        bool compute_completed_{false};
+        bool stop_compute_thread_{false};
 
         // ========================================================================
         // ====================== Main Controller Functions =======================
@@ -147,6 +156,7 @@ class TestVelocityController : public controller_interface::ControllerInterface
         void updateJointStates();			
         void updateRobotData();
         void setMode(CtrlMode control_mode);
+        void computeWorkerLoop();
 
         // ========================================================================
         // =========================== ROS Subs & Pubs  ===========================
