@@ -28,7 +28,7 @@ namespace dyros_fr3_controllers
             auto_declare<std::string>("arm_id", "");
 
             const std::string pkg_share = ament_index_cpp::get_package_share_directory("dyros_fr3_controllers");
-            urdf_path = pkg_share + "/urdf/fr3_franka_hand.urdf";
+            urdf_path = pkg_share + "/urdf/fr3_bar.urdf";
             std::ifstream urdf_file(urdf_path);
             if (!urdf_file.good()) 
             {

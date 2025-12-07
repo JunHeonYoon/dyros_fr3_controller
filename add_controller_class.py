@@ -532,7 +532,7 @@ class ___CLASS___ : public controller_interface::ControllerInterface
                                                  "fr3_link5",
                                                  "fr3_link6",
                                                  "fr3_link7"};
-            std::string ee_name_{"fr3_hand_tcp"};
+            std::string ee_name_{"bar_tcp"};
             Matrix4d             x_;            // Homogeneous matrix; pose of EE (4,4)
             Vector6d             xdot_;         // velocity of link4 (6,1); linear + angular
             Matrix<double, 6, 7> J_;            // jacobian of EE (6,7)
@@ -651,7 +651,7 @@ namespace ___PKG___
             auto_declare<std::string>("arm_id", "");
 
             const std::string pkg_share = ament_index_cpp::get_package_share_directory("dyros_fr3_controllers");
-            urdf_path = pkg_share + "/urdf/fr3_franka_hand.urdf";
+            urdf_path = pkg_share + "/urdf/fr3_bar.urdf";
             std::ifstream urdf_file(urdf_path);
             if (!urdf_file.good()) 
             {

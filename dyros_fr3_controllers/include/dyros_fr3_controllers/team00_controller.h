@@ -113,7 +113,7 @@ class Team00Controller : public controller_interface::ControllerInterface
                                                  "fr3_link5",
                                                  "fr3_link6",
                                                  "fr3_link7"};
-            std::string ee_name_{"fr3_hand_tcp"};
+            std::string ee_name_{"bar_tcp"};
             Matrix4d             x_;            // Homogeneous matrix; pose of EE (4,4)
             Vector6d             xdot_;         // velocity of link4 (6,1); linear + angular
             Matrix<double, 6, 7> J_;            // jacobian of EE (6,7)

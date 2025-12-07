@@ -16,21 +16,24 @@ from launch_ros.substitutions import FindPackageShare
 def generate_robot_nodes(context):
     load_gripper_launch_configuration = LaunchConfiguration('load_gripper').perform(context)
     load_gripper = load_gripper_launch_configuration.lower() == 'true'
-    urdf_path = PathJoinSubstitution([
-        FindPackageShare('franka_description'), 'robots', LaunchConfiguration('urdf_file')
-    ]).perform(context)
-    robot_description = xacro.process_file(
-        urdf_path,
-        mappings={
-            'ros2_control': 'true',
-            'arm_id': LaunchConfiguration('arm_id').perform(context),
-            'arm_prefix': LaunchConfiguration('arm_prefix').perform(context),
-            'robot_ip': LaunchConfiguration('robot_ip').perform(context),
-            'hand': load_gripper_launch_configuration,
-            'use_fake_hardware': LaunchConfiguration('use_fake_hardware').perform(context),
-            'fake_sensor_commands': LaunchConfiguration('fake_sensor_commands').perform(context),
-        }
-    ).toprettyxml(indent='  ')
+    # urdf_path = PathJoinSubstitution([
+    #     FindPackageShare('franka_description'), 'robots', LaunchConfiguration('urdf_file')
+    # ]).perform(context)
+    # robot_description = xacro.process_file(
+    #     urdf_path,
+    #     mappings={
+    #         'ros2_control': 'true',
+    #         'arm_id': LaunchConfiguration('arm_id').perform(context),
+    #         'arm_prefix': LaunchConfiguration('arm_prefix').perform(context),
+    #         'robot_ip': LaunchConfiguration('robot_ip').perform(context),
+    #         'hand': load_gripper_launch_configuration,
+    #         'use_fake_hardware': LaunchConfiguration('use_fake_hardware').perform(context),
+    #         'fake_sensor_commands': LaunchConfiguration('fake_sensor_commands').perform(context),
+    #     }
+    # ).toprettyxml(indent='  ')
+    urdf_path = PathJoinSubstitution([FindPackageShare('dyros_fr3_controllers'), 'urdf', 'fr3_bar.urdf']).perform(context)
+    with open(urdf_path, 'r') as infp:
+        robot_description = infp.read()
 
     namespace = LaunchConfiguration('namespace').perform(context)
     controllers_yaml = PathJoinSubstitution([
