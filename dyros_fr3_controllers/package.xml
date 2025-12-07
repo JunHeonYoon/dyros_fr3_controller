@@ -4,7 +4,7 @@
   <name>dyros_fr3_controllers</name>
   <version>2.0.2</version>
   <description>controller package for franka fr3</description>
-  <maintainer email="monglee147@gmail.com">dyros</maintainer>
+  <maintainer email="yoonjh98@snu.ac.kr">dyros</maintainer>
   <license>Apache 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
