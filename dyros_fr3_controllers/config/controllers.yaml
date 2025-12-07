@@ -131,6 +131,8 @@
   test_position_controller:
     ros__parameters:
       arm_id: "fr3"
+
+
 /**:
   controller_manager:
     ros__parameters:

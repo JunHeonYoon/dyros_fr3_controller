@@ -496,14 +496,7 @@ class ___CLASS___ : public controller_interface::ControllerInterface
                 // -------------------------------------
                 // TODO 1: Add your control modes here
                 // Example:
-                joint_ctrl_home_1,
-                joint_ctrl_home_2,
                 hw8_1,
-                hw8_2,
-                hw8_3,
-                hw8_4,
-                hw8_5,
-                hw8_6,
                 // -------------------------------------
 
                 DEFAULT
@@ -567,11 +560,6 @@ class ___CLASS___ : public controller_interface::ControllerInterface
             // TODO 2: Add your control function here
             // Example:
             void HW8_1();
-            void HW8_2(const Vector7d& q_target, const Vector7d& qdot_target, const double duration);
-            void HW8_3(const Vector7d& q_target, const Vector7d& qdot_target, const double duration);
-            void HW8_4(const Matrix4d x_target, const double duration);
-            void HW8_5(const Matrix4d x_target, const double duration);
-            void HW8_6(const Matrix4d x_target, const double duration);
             // ----------------------------------------------
 
             // ============================================================================
@@ -943,28 +931,7 @@ namespace ___PKG___
             // Caution: not using string, but int on case!!!!
             // Example:
             case 2:
-                setMode(joint_ctrl_home_1);
-                break;
-            case 3:
                 setMode(hw8_1);
-                break;
-            case 4:
-                setMode(hw8_2);
-                break;
-            case 5:
-                setMode(hw8_3);
-                break;
-            case 6:
-                setMode(joint_ctrl_home_2);
-                break;
-            case 7:
-                setMode(hw8_4);
-                break;
-            case 8:
-                setMode(hw8_5);
-                break;
-            case 9:
-                setMode(hw8_6);
                 break;
             // --------------------------------------------------------------------------------------
 
@@ -1004,69 +971,11 @@ namespace ___PKG___
             // ----------------------------------------------------------------------------
             // TODO 4: Add your control logic here (using the control functions from TODO 5)
             // Example:
-            case joint_ctrl_home_1:
-            {
-                Vector7d target_position;
-                target_position << 0.0, 0.0, 0.0, -30*DEG2RAD, 0.0, 90*DEG2RAD, 0.;
-                moveJointPositionTorque(target_position, 3.0);
-                break;
-            }
-            case joint_ctrl_home_2:
-            {
-                Vector7d target_position;
-                target_position << 0.0, 0.0, 0.0, -M_PI/2., 0.0, M_PI/2., M_PI / 4.;
-                moveJointPositionTorque(target_position, 3.0);
-                break;
-            }
             case hw8_1:
             {
                 HW8_1();
                 break;
             }
-            case hw8_2:
-            {
-                Vector7d q_target,qdot_target;
-                q_target << 0.0, 0.0, 0.0, -60*DEG2RAD, 0.0, 90*DEG2RAD, 0.;
-                qdot_target.setZero();
-                HW8_2(q_target, qdot_target, 2.0);
-                break;
-            }
-            case hw8_3:
-            {
-                Vector7d q_target,qdot_target;
-                q_target << 0.0, 0.0, 0.0, -60*DEG2RAD, 0.0, 90*DEG2RAD, 0.;
-                qdot_target.setZero();
-                HW8_3(q_target, qdot_target, 2.0);
-                break;
-            }
-            case hw8_4:
-            {
-                Matrix4d x_target;
-                x_target.setIdentity();
-                x_target = x_init_;
-                x_target(1, 3) += 0.1;
-                HW8_4(x_target, 2.0);
-                break;
-            }
-            case hw8_5:
-            {
-                Matrix4d x_target;
-                x_target.setIdentity();
-                x_target = x_init_;
-                x_target(1, 3) += 0.1;
-                HW8_5(x_target, 2.0);
-                break;
-            }
-            case hw8_6:
-            {
-                Matrix4d x_target;
-                x_target.setIdentity();
-                x_target = x_init_;
-                x_target.block(0,3,3,1) << 0.3, -0.012, 0.52;
-                HW8_6(x_target, 2.0);
-                break;
-            }
-            
             default:
             {
                 tau_desired_ = c_;
@@ -1116,185 +1025,6 @@ namespace ___PKG___
     void ___CLASS___::HW8_1()
     {
         tau_desired_ = c_;
-    }
-
-    void ___CLASS___::HW8_2(const Vector7d& q_target, const Vector7d& qdot_target, const double duration)
-    {
-        Vector7d Kp_diag, Kv_diag;
-        Kp_diag << 600.0,600.0,600.0,600.0,250.0,150.0,50.0;
-        Kv_diag << 30.0,30.0,30.0,30.0,10.0,10.0,5.0;
-
-        q_desired_ = DyrosMath::cubicVector<7>(play_time_,
-                                               control_start_time_,
-                                               control_start_time_+duration,
-                                               q_init_,
-                                               q_target,
-                                               qdot_init_,
-                                               qdot_target);
-
-        qdot_desired_ = DyrosMath::cubicDotVector<7>(play_time_,
-                                                     control_start_time_,
-                                                     control_start_time_+duration,
-                                                     q_init_,
-                                                     q_target,
-                                                     qdot_init_,
-                                                     qdot_target);
-
-        tau_desired_ = Kp_diag.asDiagonal() * (q_desired_ - q_) + Kv_diag.asDiagonal() * (qdot_desired_ - qdot_) + c_;
-    }
-
-    void ___CLASS___::HW8_3(const Vector7d& q_target, const Vector7d& qdot_target, const double duration)
-    {
-        Vector7d Kp_diag, Kv_diag;
-        Kp_diag << 600.0,600.0,600.0,600.0,250.0,150.0,50.0;
-        Kv_diag << 30.0,30.0,30.0,30.0,10.0,10.0,5.0;
-
-        q_desired_ = DyrosMath::cubicVector<7>(play_time_,
-                                               control_start_time_,
-                                               control_start_time_+duration,
-                                               q_init_,
-                                               q_target,
-                                               qdot_init_,
-                                               qdot_target);
-
-        qdot_desired_ = DyrosMath::cubicDotVector<7>(play_time_,
-                                                     control_start_time_,
-                                                     control_start_time_+duration,
-                                                     q_init_,
-                                                     q_target,
-                                                     qdot_init_,
-                                                     qdot_target);
-
-        tau_desired_ = M_ * (Kp_diag.asDiagonal() * (q_desired_ - q_) + Kv_diag.asDiagonal() * (qdot_desired_ - qdot_)) + c_;
-    }
-    
-    void ___CLASS___::HW8_4(const Matrix4d x_target, const double duration)
-    {
-        Matrix4d x_desired;
-        x_desired.setIdentity();
-        x_desired.block(0,3,3,1) = DyrosMath::cubicVector<3>(play_time_,
-                                                            control_start_time_,
-                                                            control_start_time_+duration,
-                                                            x_init_.block(0,3,3,1),
-                                                            x_target.block(0,3,3,1),
-                                                            VectorXd::Zero(3),
-                                                            VectorXd::Zero(3));
-        x_desired.block(0,0,3,3) = x_target.block(0,0,3,3);
-
-        Vector6d xdot_desired;
-        xdot_desired.head(3) = DyrosMath::cubicDotVector<3>(play_time_,
-                                                            control_start_time_,
-                                                            control_start_time_+duration,
-                                                            x_init_.block(0,3,3,1),
-                                                            x_target.block(0,3,3,1),
-                                                            VectorXd::Zero(3),
-                                                            VectorXd::Zero(3));
-        xdot_desired.tail(3).setZero();
-
-        Vector6d x_error, xdot_error;
-        x_error.head(3) = x_desired.block(0,3,3,1) - x_.block(0,3,3,1);
-        x_error.tail(3) = -DyrosMath::getPhi(x_.block(0,0,3,3), x_desired.block(0,0,3,3));
-        xdot_error = xdot_desired - xdot_;
-        
-        Vector6d Kp_diag, Kv_diag;
-        Kp_diag << 400, 400, 400, 400, 400, 400;
-        Kv_diag << 40, 40, 40, 40, 40, 40;
-
-        Vector6d Fstar = Kp_diag.asDiagonal() * x_error + Kv_diag.asDiagonal() * xdot_error;
-        Matrix6d M_task = (J_ * M_inv_ * J_.transpose()).inverse();
-        
-        tau_desired_ = J_.transpose() * M_task * Fstar + c_;
-    }
-
-    void ___CLASS___::HW8_5(const Matrix4d x_target, const double duration)
-    {
-        Matrix4d x_desired;
-        x_desired.setIdentity();
-        x_desired.block(0,3,3,1) = DyrosMath::cubicVector<3>(play_time_,
-                                                            control_start_time_,
-                                                            control_start_time_+duration,
-                                                            x_init_.block(0,3,3,1),
-                                                            x_target.block(0,3,3,1),
-                                                            VectorXd::Zero(3),
-                                                            VectorXd::Zero(3));
-        x_desired.block(0,0,3,3) = x_target.block(0,0,3,3);
-
-        Vector6d xdot_desired;
-        xdot_desired.head(3) = DyrosMath::cubicDotVector<3>(play_time_,
-                                                            control_start_time_,
-                                                            control_start_time_+duration,
-                                                            x_init_.block(0,3,3,1),
-                                                            x_target.block(0,3,3,1),
-                                                            VectorXd::Zero(3),
-                                                            VectorXd::Zero(3));
-        xdot_desired.tail(3).setZero();
-
-        Vector6d x_error, xdot_error;
-        x_error.head(3) = x_desired.block(0,3,3,1) - x_.block(0,3,3,1);
-        x_error.tail(3) = -DyrosMath::getPhi(x_.block(0,0,3,3), x_desired.block(0,0,3,3));
-        xdot_error = xdot_desired - xdot_;
-        
-        Vector6d Kp_diag, Kv_diag;
-        Kp_diag << 400, 400, 400, 400, 400, 400;
-        Kv_diag << 40, 40, 40, 40, 40, 40;
-
-        Vector6d Fstar = Kp_diag.asDiagonal() * x_error + Kv_diag.asDiagonal() * xdot_error;
-
-        Vector7d Kp_joint_diag, Kv_joint_diag;
-        Kp_joint_diag << 600.0,600.0,600.0,600.0,250.0,150.0,50.0;
-        Kv_joint_diag << 30.0,30.0,30.0,30.0,10.0,10.0,5.0;
-
-        Vector7d tau_null = M_ * (Kp_joint_diag.asDiagonal() * (q_init_ - q_) + Kv_joint_diag.asDiagonal() * (-qdot_));
-
-        Matrix6d M_task = (J_ * M_inv_ * J_.transpose()).inverse();
-        Matrix<double, 6, 7> J_T_pinv = M_task * J_ * M_inv_;
-        
-        tau_desired_ = J_.transpose() * M_task * Fstar + (Matrix7d::Identity() - J_.transpose() * J_T_pinv) * tau_null + c_;
-    }
-
-    void ___CLASS___::HW8_6(const Matrix4d x_target, const double duration)
-    {
-        Matrix4d x_desired;
-        x_desired.setIdentity();
-        x_desired.block(0,3,3,1) = DyrosMath::cubicVector<3>(play_time_,
-                                                            control_start_time_,
-                                                            control_start_time_+duration,
-                                                            x_init_.block(0,3,3,1),
-                                                            x_target.block(0,3,3,1),
-                                                            VectorXd::Zero(3),
-                                                            VectorXd::Zero(3));
-        x_desired.block(0,0,3,3) = x_target.block(0,0,3,3);
-
-        Vector6d Kp_diag, Kv_diag, Kp_Kv_diag;
-        Kp_diag << 400, 400, 400, 400, 400, 400;
-        Kv_diag << 40, 40, 40, 40, 40, 40;
-        Kp_Kv_diag = Kp_diag.array() / Kv_diag.array();
-
-        Vector6d x_error;
-        x_error.head(3) = x_desired.block(0,3,3,1) - x_.block(0,3,3,1);
-        x_error.tail(3) = -DyrosMath::getPhi(x_.block(0,0,3,3), x_desired.block(0,0,3,3));
-
-        double xdot_max = 0.3;
-
-        Vector6d xdot_desired;
-        if((Kp_Kv_diag.head(3).asDiagonal() * x_error.head(3)).norm() < xdot_max) xdot_desired.head(3) = Kp_Kv_diag.head(3).asDiagonal() * x_error.head(3);
-        else xdot_desired.head(3) =x_error.head(3).normalized() * xdot_max;
-        xdot_desired.tail(3).setZero();
-
-        Vector6d Fstar;
-        Fstar.head(3) = Kv_diag.head(3).asDiagonal() * (xdot_desired.head(3) - xdot_.head(3));
-        Fstar.tail(3) = Kp_diag.tail(3).asDiagonal() * x_error.tail(3) - Kv_diag.tail(3).asDiagonal() * xdot_.tail(3);
-
-        Vector7d Kp_joint_diag, Kv_joint_diag;
-        Kp_joint_diag << 600.0,600.0,600.0,600.0,250.0,150.0,50.0;
-        Kv_joint_diag << 30.0,30.0,30.0,30.0,10.0,10.0,5.0;
-
-        Vector7d tau_null = M_ * (Kp_joint_diag.asDiagonal() * (q_init_ - q_) + Kv_joint_diag.asDiagonal() * (-qdot_));
-
-        Matrix6d M_task = (J_ * M_inv_ * J_.transpose()).inverse();
-        Matrix<double, 6, 7> J_T_pinv = M_task * J_ * M_inv_;
-        
-        tau_desired_ = J_.transpose() * M_task * Fstar + (Matrix7d::Identity() - J_.transpose() * J_T_pinv) * tau_null +c_;
     }
     // -------------------------------------
     // =============================================================================

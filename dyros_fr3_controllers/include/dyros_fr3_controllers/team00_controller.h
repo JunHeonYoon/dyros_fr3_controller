@@ -77,14 +77,7 @@ class Team00Controller : public controller_interface::ControllerInterface
                 // -------------------------------------
                 // TODO 1: Add your control modes here
                 // Example:
-                joint_ctrl_home_1,
-                joint_ctrl_home_2,
                 hw8_1,
-                hw8_2,
-                hw8_3,
-                hw8_4,
-                hw8_5,
-                hw8_6,
                 // -------------------------------------
 
                 DEFAULT
@@ -148,11 +141,6 @@ class Team00Controller : public controller_interface::ControllerInterface
             // TODO 2: Add your control function here
             // Example:
             void HW8_1();
-            void HW8_2(const Vector7d& q_target, const Vector7d& qdot_target, const double duration);
-            void HW8_3(const Vector7d& q_target, const Vector7d& qdot_target, const double duration);
-            void HW8_4(const Matrix4d x_target, const double duration);
-            void HW8_5(const Matrix4d x_target, const double duration);
-            void HW8_6(const Matrix4d x_target, const double duration);
             // ----------------------------------------------
 
             // ============================================================================
