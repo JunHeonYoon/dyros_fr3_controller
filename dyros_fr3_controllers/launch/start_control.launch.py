@@ -9,16 +9,6 @@ from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 import re
 
-def snake_to_pascal(name: str) -> str:
-    """Convert snake_case or lowercase name to PascalCase"""
-    parts = re.split(r'[_\s]+', name)
-    return ''.join(p.capitalize() for p in parts if p)
-
-# Add the path to the `utils` folder
-package_share = get_package_share_directory('dyros_fr3_controllers')
-utils_path = os.path.join(package_share, '..', '..', 'lib', 'dyros_fr3_controllers', 'utils')
-sys.path.append(os.path.abspath(utils_path))
-
 from launch_utils import load_yaml
 
 
@@ -74,6 +64,16 @@ def generate_robot_nodes(context):
             )
         )
     return nodes
+
+def snake_to_pascal(name: str) -> str:
+    """Convert snake_case or lowercase name to PascalCase, and normalize 'Controller' suffix"""
+    parts = re.split(r'[_\s]+', name)
+    base = ''.join(p.capitalize() for p in parts if p)
+
+    if base.lower().endswith('controller'):
+        base = base[:-10] + 'Controller'  # len("controller") = 10
+
+    return base
 
 
 def generate_gui_nodes(context):
