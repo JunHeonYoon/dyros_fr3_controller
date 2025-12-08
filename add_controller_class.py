@@ -35,25 +35,8 @@ def append_file(path: str, content: str) -> None:
 
 
 def update_cmakelists(new_src_rel: str, ctrl_snake: str, controller_class: str) -> None:
-# def update_cmakelists(new_src_rel: str) -> None:
     cmake_path = PACKAGE_PATH / "CMakeLists.txt"
     content = read_file(cmake_path)
-
-    # if new_src_rel in content:
-    #     return
-
-    # idx = content.find("add_library(")
-    # if idx == -1:
-    #     write_file(cmake_path, content)
-    #     return
-    # # Find the closing ')' after the block start
-    # close_idx = content.find(")\n", idx)
-    # if close_idx == -1:
-    #     close_idx = len(content)
-    # new_content = content[:close_idx] + f"\n        {new_src_rel}" + content[close_idx:]
-    # content = new_content
-
-    # write_file(cmake_path, content)
 
     if new_src_rel not in content:
         idx = content.find("add_library(")
@@ -74,9 +57,15 @@ install(PROGRAMS
   RENAME {controller_class}QT
 )
 """
-        content = content + install_block
+
+        ament_idx = content.find("ament_package(")
+        if ament_idx != -1:
+            content = content[:ament_idx] + install_block + content[ament_idx:]
+        else:
+            content = content + install_block
 
     write_file(cmake_path, content)
+
 
 
 def update_plugin_xml(controller_class: str) -> None:
