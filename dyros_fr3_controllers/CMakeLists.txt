@@ -35,8 +35,7 @@ find_package(Eigen3                     REQUIRED)
 add_library(${PROJECT_NAME} SHARED
         src/test_effort_controller.cpp
         src/test_velocity_controller.cpp
-        src/test_position_controller.cpp
-        src/team00_controller.cpp)
+        src/test_position_controller.cpp)
 
 target_include_directories(${PROJECT_NAME} PUBLIC
         include
@@ -94,10 +93,3 @@ ament_export_dependencies(
 )
 
 ament_package()
-
-
-install(PROGRAMS
-  ${PROJECT_NAME}/team00_controller/ros2_qt_gui.py
-  DESTINATION lib/${PROJECT_NAME}
-  RENAME Team00ControllerQT
-)
