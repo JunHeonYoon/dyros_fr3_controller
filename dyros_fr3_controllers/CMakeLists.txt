@@ -93,10 +93,3 @@ ament_export_dependencies(
 )
 
 ament_package()
-
-
-install(PROGRAMS
-  ${PROJECT_NAME}/team00_controller/ros2_qt_gui.py
-  DESTINATION lib/${PROJECT_NAME}
-  RENAME Team00ControllerQT
-)
