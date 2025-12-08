@@ -10,9 +10,14 @@ from launch_ros.substitutions import FindPackageShare
 import re
 
 def snake_to_pascal(name: str) -> str:
-    """Convert snake_case or lowercase name to PascalCase"""
+    """Convert snake_case or lowercase name to PascalCase, and normalize 'Controller' suffix"""
     parts = re.split(r'[_\s]+', name)
-    return ''.join(p.capitalize() for p in parts if p)
+    base = ''.join(p.capitalize() for p in parts if p)
+    if base.lower().endswith('controller'):
+        base = base[:-10] + 'Controller'  # len("controller") = 10
+
+    return base
+
 
 # Add the path to the `utils` folder
 package_share = get_package_share_directory('dyros_fr3_controllers')
