@@ -131,15 +131,3 @@
   test_position_controller:
     ros__parameters:
       arm_id: "fr3"
-
-
-/**:
-  controller_manager:
-    ros__parameters:
-      team00_controller:
-        type: dyros_fr3_controllers/Team00Controller
-
-/**:
-  team00_controller:
-    ros__parameters:
-      arm_id: "fr3"
