@@ -9,6 +9,11 @@ from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 import re
 
+# Add the path to the `utils` folder
+package_share = get_package_share_directory('dyros_fr3_controllers')
+utils_path = os.path.join(package_share, '..', '..', 'lib', 'dyros_fr3_controllers', 'utils')
+sys.path.append(os.path.abspath(utils_path))
+
 from launch_utils import load_yaml
 
 
