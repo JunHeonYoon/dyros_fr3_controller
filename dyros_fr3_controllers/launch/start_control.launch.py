@@ -7,6 +7,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
+import re
 
 # Add the path to the `utils` folder
 package_share = get_package_share_directory('dyros_fr3_controllers')
@@ -51,7 +52,6 @@ def generate_robot_nodes(context):
                 arguments=[controller_name, '--controller-manager-timeout', '30'],
                 parameters=[PathJoinSubstitution([
                     FindPackageShare('dyros_fr3_controllers'), 'config', "controllers.yaml",
-
                 ])],
                 output='screen',
             )
@@ -70,11 +70,38 @@ def generate_robot_nodes(context):
         )
     return nodes
 
-# The generate_launch_description function is the entry point (like "main")
-# It is called by the ROS 2 launch system when the launch file is executed.
-# via: ros2 launch franka_bringup example.launch.py ARGS...
-# This function must return a LaunchDescription object containing nodes to be launched.
-# it calls the generate_robot_nodes function to get the list of nodes to be launched.
+def snake_to_pascal(name: str) -> str:
+    """Convert snake_case or lowercase name to PascalCase, and normalize 'Controller' suffix"""
+    parts = re.split(r'[_\s]+', name)
+    base = ''.join(p.capitalize() for p in parts if p)
+
+    if base.lower().endswith('controller'):
+        base = base[:-10] + 'Controller'  # len("controller") = 10
+
+    return base
+
+
+def generate_gui_nodes(context):
+    use_gui = LaunchConfiguration('use_gui').perform(context)
+    if use_gui.lower() not in ('true', '1', 'yes'):
+        return []
+
+    ctrl_snake = LaunchConfiguration('controller_name').perform(context)
+
+    # Convert snake_case to PascalCase
+    ctrl_pascal = snake_to_pascal(ctrl_snake)
+
+    gui_exec = ctrl_pascal + "QT"
+
+    return [
+        Node(
+            package='dyros_fr3_controllers',
+            executable=gui_exec,
+            name=gui_exec,
+            output='screen',
+            emulate_tty=True,
+        )
+    ]
 
 
 def generate_launch_description():
@@ -91,5 +118,11 @@ def generate_launch_description():
             default_value='test_effort_controller',
             description='Name of the controller to spawn (required, default: test_effort_controller)',
         ),
+        DeclareLaunchArgument(
+            'use_gui',
+            default_value='true',
+            description='Whether to launch Qt GUI for the controller',
+        ),
         OpaqueFunction(function=generate_robot_nodes),
+        OpaqueFunction(function=generate_gui_nodes),
     ])
