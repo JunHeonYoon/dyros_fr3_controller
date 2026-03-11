@@ -20,6 +20,7 @@ from launch_utils import load_yaml
 def generate_robot_nodes(context):
     config_file = LaunchConfiguration('robot_config_file').perform(context)
     controller_name = LaunchConfiguration('controller_name').perform(context)
+    use_mujoco = LaunchConfiguration('use_mujoco').perform(context)
     configs = load_yaml(config_file)
     nodes = []
     for item_name, config in configs.items():
@@ -36,6 +37,7 @@ def generate_robot_nodes(context):
                     'arm_prefix': str(config['arm_prefix']),
                     'namespace': str(namespace),
                     'urdf_file': str(config['urdf_file']),
+                    'use_mujoco': use_mujoco,
                     'robot_ip': str(config['robot_ip']),
                     'load_gripper': str(config['load_gripper']),
                     'use_fake_hardware': str(config['use_fake_hardware']),
@@ -118,6 +120,9 @@ def generate_launch_description():
             default_value='test_effort_controller',
             description='Name of the controller to spawn (required, default: test_effort_controller)',
         ),
+        DeclareLaunchArgument('use_mujoco',
+                              default_value='false',
+                              description='Use Mujoco hardware interface'),
         DeclareLaunchArgument(
             'use_gui',
             default_value='true',
