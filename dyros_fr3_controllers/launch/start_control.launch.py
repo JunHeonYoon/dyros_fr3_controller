@@ -83,27 +83,27 @@ def snake_to_pascal(name: str) -> str:
     return base
 
 
-def generate_gui_nodes(context):
-    use_gui = LaunchConfiguration('use_gui').perform(context)
-    if use_gui.lower() not in ('true', '1', 'yes'):
-        return []
+# def generate_gui_nodes(context):
+#     use_gui = LaunchConfiguration('use_gui').perform(context)
+#     if use_gui.lower() not in ('true', '1', 'yes'):
+#         return []
 
-    ctrl_snake = LaunchConfiguration('controller_name').perform(context)
+#     ctrl_snake = LaunchConfiguration('controller_name').perform(context)
 
-    # Convert snake_case to PascalCase
-    ctrl_pascal = snake_to_pascal(ctrl_snake)
+#     # Convert snake_case to PascalCase
+#     ctrl_pascal = snake_to_pascal(ctrl_snake)
 
-    gui_exec = ctrl_pascal + "QT"
+#     gui_exec = ctrl_pascal + "QT"
 
-    return [
-        Node(
-            package='dyros_fr3_controllers',
-            executable=gui_exec,
-            name=gui_exec,
-            output='screen',
-            emulate_tty=True,
-        )
-    ]
+#     return [
+#         Node(
+#             package='dyros_fr3_controllers',
+#             executable=gui_exec,
+#             name=gui_exec,
+#             output='screen',
+#             emulate_tty=True,
+#         )
+#     ]
 
 
 def generate_launch_description():
@@ -123,11 +123,11 @@ def generate_launch_description():
         DeclareLaunchArgument('use_mujoco',
                               default_value='false',
                               description='Use Mujoco hardware interface'),
-        DeclareLaunchArgument(
-            'use_gui',
-            default_value='true',
-            description='Whether to launch Qt GUI for the controller',
-        ),
+        # DeclareLaunchArgument(
+        #     'use_gui',
+        #     default_value='true',
+        #     description='Whether to launch Qt GUI for the controller',
+        # ),
         OpaqueFunction(function=generate_robot_nodes),
-        OpaqueFunction(function=generate_gui_nodes),
+        # OpaqueFunction(function=generate_gui_nodes),
     ])
